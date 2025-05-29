@@ -1,4 +1,4 @@
-const API_URL = 'https://backend-lh75.onrender.com/peliculas';
+const API_URL = 'https://web-6dmv.onrender.com/peliculas';
 
 async function cargarPeliculas() {
   try {
@@ -64,6 +64,11 @@ document.getElementById('formAgregar').addEventListener('submit', async (e) => {
     url: document.getElementById('url').value.trim(),
   };
 
+  if (!data.titulo || !data.genero) {
+    alert('Título y género son obligatorios');
+    return;
+  }
+
   const res = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -73,10 +78,12 @@ document.getElementById('formAgregar').addEventListener('submit', async (e) => {
   if (res.ok) {
     const result = await res.json();
     console.log('Película agregada:', result.pelicula);
-    setTimeout(cargarPeliculas, 300); // pequeña espera por render
+    setTimeout(cargarPeliculas, 300);
     e.target.reset();
   } else {
-    alert('Error al agregar la película');
+    const error = await res.json();
+    console.error('Error:', error);
+    alert(error.error || 'Error al agregar la película');
   }
 });
 
