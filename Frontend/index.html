@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Películas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Películas</h1>
+
+<table id="tablaPeliculas">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Título</th>
+      <th>Director</th>
+      <th>Género</th>
+      <th>Año</th>
+      <th>Imagen</th>
+      <th>URL</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<h2>Agregar nueva película</h2>
+<form id="formAgregar">
+  <input type="text" id="titulo" placeholder="Título" required>
+  <input type="text" id="director" placeholder="Director" required>
+  <input type="text" id="genero" placeholder="Género" required>
+  <input type="number" id="anio" placeholder="Año" required>
+  <input type="text" id="imagen" placeholder="URL de imagen">
+  <input type="text" id="url" placeholder="URL de información o tráiler">
+  <button type="submit">Agregar</button>
+  
+</form>
+
+<script src="main.js"></script>
+
+</body>
+</html>
