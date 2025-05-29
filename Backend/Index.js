@@ -6,6 +6,7 @@ const { Pool } = require('pg');
 
 const app = express();
 
+// Configuración de la base de datos
 const pool = new Pool({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
@@ -15,21 +16,23 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+// Middleware
 app.use(express.json());
+app.use(morgan('dev'));
 
+// Configurar CORS SOLO para el frontend de Render
 const corsOptions = {
-  origin: 'https://giovanniencisodev.github.io',
+  origin: 'https://proyecto-vbbd.onrender.com',
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type']
 };
-
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // 👈 importante para solicitudes preflight
+app.options('*', cors(corsOptions)); // Preflight
 
-app.use(morgan('dev'));
+// Servir archivos estáticos desde la carpeta public
 app.use(express.static('public'));
 
-// Obtener todas las películas
+// Rutas
 app.get('/peliculas', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM peliculas ORDER BY idPelicula ASC');
@@ -40,7 +43,6 @@ app.get('/peliculas', async (req, res) => {
   }
 });
 
-// Agregar nueva película
 app.post('/peliculas', async (req, res) => {
   const { titulo, director, genero, anio, imagen, url } = req.body;
 
@@ -55,16 +57,13 @@ app.post('/peliculas', async (req, res) => {
       RETURNING *
     `;
     const result = await pool.query(query, [titulo, director, genero, anio, imagen, url]);
-    const nuevaPelicula = result.rows[0];
-
-    res.status(201).json({ mensaje: 'Película agregada exitosamente', pelicula: nuevaPelicula });
+    res.status(201).json({ mensaje: 'Película agregada exitosamente', pelicula: result.rows[0] });
   } catch (error) {
     console.error('Error al agregar película:', error);
     res.status(500).json({ error: 'Error al agregar película' });
   }
 });
 
-// Modificar película
 app.patch('/peliculas/:id', async (req, res) => {
   const idPelicula = parseInt(req.params.id);
   const { titulo, director, genero, anio, imagen, url } = req.body;
@@ -79,9 +78,7 @@ app.patch('/peliculas/:id', async (req, res) => {
     `;
     const result = await pool.query(query, [titulo, director, genero, anio, imagen, url, idPelicula]);
 
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Película no encontrada' });
-    }
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Película no encontrada' });
 
     res.json({ mensaje: 'Película actualizada correctamente' });
   } catch (error) {
@@ -90,18 +87,14 @@ app.patch('/peliculas/:id', async (req, res) => {
   }
 });
 
-// Eliminar película
 app.delete('/peliculas/:id', async (req, res) => {
   const idPelicula = parseInt(req.params.id);
-  if (isNaN(idPelicula)) {
-    return res.status(400).json({ error: 'ID inválido' });
-  }
+  if (isNaN(idPelicula)) return res.status(400).json({ error: 'ID inválido' });
 
   try {
     const result = await pool.query('DELETE FROM peliculas WHERE idPelicula = $1', [idPelicula]);
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Película no encontrada' });
-    }
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Película no encontrada' });
+
     res.json({ mensaje: 'Película eliminada correctamente' });
   } catch (error) {
     console.error('Error al eliminar película:', error);
@@ -114,6 +107,7 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });
 });
 
+// Iniciar servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor ejecutándose en puerto ${PORT}`);
