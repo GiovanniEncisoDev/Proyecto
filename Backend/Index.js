@@ -20,8 +20,7 @@ app.use(express.json());
 const corsOptions = {
   origin: 'https://giovanniencisodev.github.io',
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type'],
-  credentials: true
+  allowedHeaders: ['Content-Type']
 };
 
 app.use(cors(corsOptions));
