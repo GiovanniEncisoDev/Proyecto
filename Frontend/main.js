@@ -45,7 +45,7 @@ document.addEventListener('click', async (e) => {
   }
 });
 
-document.getElementById('formularioPeliculas').addEventListener('submit', async (e) => {
+document.getElementById('formAgregar').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const titulo = document.getElementById('titulo').value;
@@ -73,5 +73,6 @@ document.getElementById('formularioPeliculas').addEventListener('submit', async 
     alert('Error al agregar película');
   }
 });
+
 
 cargarPeliculas();
