@@ -22,12 +22,9 @@ app.use(morgan('dev'));
 
 app.use(cors({
   origin: 'https://proyecto-vbbd.onrender.com',
-  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 200
+  methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type']
 }));
-
-app.options('*', cors());
 
 // Obtener todas las películas
 app.get('/peliculas', async (req, res) => {
@@ -62,54 +59,42 @@ app.post('/peliculas', async (req, res) => {
   }
 });
 
+// Actualizar una película
 app.patch('/peliculas/:idpelicula', async (req, res) => {
-  const id = parseInt(req.params.idpelicula, 10);
-  if (isNaN(id)) {
-    return res.status(400).json({ error: 'ID inválido' });
-  }
+  const id = parseInt(req.params.idpelicula);
+  if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
 
-  // Campos que puedes actualizar
-  const camposPermitidos = ['titulo', 'director', 'genero', 'anio', 'imagen', 'url'];
-
-  // Filtrar campos que están en el body y que son válidos
-  const camposParaActualizar = [];
+  const campos = ['titulo', 'director', 'genero', 'anio', 'imagen', 'url'];
   const valores = [];
+  const sets = [];
 
-  camposPermitidos.forEach(campo => {
+  campos.forEach((campo) => {
     if (req.body[campo] !== undefined) {
-      camposParaActualizar.push(`${campo} = $${valores.length + 1}`);
+      sets.push(`${campo} = $${sets.length + 1}`);
       valores.push(req.body[campo]);
     }
   });
 
-  if (camposParaActualizar.length === 0) {
-    return res.status(400).json({ error: 'No se enviaron campos válidos para actualizar' });
+  if (sets.length === 0) {
+    return res.status(400).json({ error: 'No se enviaron campos para actualizar' });
   }
 
-  // Agregar el ID al final para la cláusula WHERE
   valores.push(id);
-
   const query = `
-    UPDATE peliculas
-    SET ${camposParaActualizar.join(', ')}
+    UPDATE peliculas SET ${sets.join(', ')}
     WHERE idpelicula = $${valores.length}
-    RETURNING *
   `;
 
   try {
     const result = await pool.query(query, valores);
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Película no encontrada' });
 
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Película no encontrada' });
-    }
-
-    res.json({ mensaje: 'Película actualizada correctamente', pelicula: result.rows[0] });
+    res.json({ mensaje: 'Película actualizada correctamente' });
   } catch (error) {
     console.error('Error al actualizar película:', error);
     res.status(500).json({ error: 'Error al actualizar película' });
   }
 });
-
 
 // Eliminar una película
 app.delete('/peliculas/:idpelicula', async (req, res) => {

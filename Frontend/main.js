@@ -1,91 +1,78 @@
-// CAMBIA ESTA URL a la de tu backend en Render
 const API_URL = 'https://web-6dmv.onrender.com/peliculas';
 
-let modoEditar = false;
-let peliculaEditarId = null;
-
 async function cargarPeliculas() {
-  const res = await fetch(API_URL);
-  const peliculas = await res.json();
+  try {
+    const res = await fetch(API_URL);
+    const peliculas = await res.json();
 
-  const tbody = document.querySelector('#tablaPeliculas tbody');
-  tbody.innerHTML = '';
+    const tbody = document.querySelector('#tablaPeliculas tbody');
+    tbody.innerHTML = '';
 
-  peliculas.forEach(p => {
-    const fila = document.createElement('tr');
-    fila.innerHTML = `
-      <td>${p.idPelicula}</td>
-      <td>${p.titulo}</td>
-      <td>${p.director}</td>
-      <td>${p.genero}</td>
-      <td>${p.anio}</td>
-      <td><img src="${p.imagen || ''}" alt="img" width="50"></td>
-      <td><a href="${p.url || '#'}" target="_blank">Ver</a></td>
-      <td>
-        <button onclick="eliminar(${p.idPelicula})">Eliminar</button>
-        <button onclick="editar(${p.idPelicula})">Modificar</button>
-      </td>
-    `;
-    tbody.appendChild(fila);
-  });
+    peliculas.forEach(p => {
+      const fila = document.createElement('tr');
+      fila.innerHTML = `
+        <td>${p.idpelicula}</td>
+        <td>${p.titulo}</td>
+        <td>${p.director || ''}</td>
+        <td>${p.genero}</td>
+        <td>${p.anio || ''}</td>
+        <td><img src="${p.imagen || ''}" alt="img" width="50"></td>
+        <td><a href="${p.url || '#'}" target="_blank">Ver</a></td>
+        <td><button class="btn-eliminar" data-id="${p.idpelicula}">Eliminar</button></td>
+      `;
+      tbody.appendChild(fila);
+    });
+  } catch (err) {
+    console.error('Error al cargar películas:', err);
+    alert('Error al cargar películas');
+  }
 }
 
-async function editar(id) {
-  const res = await fetch(API_URL);
-  const peliculas = await res.json();
-  const pelicula = peliculas.find(p => p.idPelicula === id);
-  if (!pelicula) return alert("Película no encontrada");
-
-  document.getElementById('titulo').value = pelicula.titulo;
-  document.getElementById('director').value = pelicula.director;
-  document.getElementById('genero').value = pelicula.genero;
-  document.getElementById('anio').value = pelicula.anio;
-  document.getElementById('imagen').value = pelicula.imagen || '';
-  document.getElementById('url').value = pelicula.url || '';
-
-  modoEditar = true;
-  peliculaEditarId = id;
-  document.querySelector('#formAgregar button').textContent = 'Guardar cambios';
-}
+document.addEventListener('click', async (e) => {
+  if (e.target.classList.contains('btn-eliminar')) {
+    const id = e.target.getAttribute('data-id');
+    if (confirm('¿Estás seguro de que deseas eliminar esta película?')) {
+      try {
+        const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        alert(data.mensaje);
+        cargarPeliculas();
+      } catch (err) {
+        console.error('Error al eliminar película:', err);
+        alert('Error al eliminar película');
+      }
+    }
+  }
+});
 
 document.getElementById('formAgregar').addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const data = {
-    titulo: document.getElementById('titulo').value,
-    director: document.getElementById('director').value,
-    genero: document.getElementById('genero').value,
-    anio: parseInt(document.getElementById('anio').value),
-    imagen: document.getElementById('imagen').value,
-    url: document.getElementById('url').value,
-  };
+  const titulo = document.getElementById('titulo').value;
+  const director = document.getElementById('director').value;
+  const genero = document.getElementById('genero').value;
+  const anio = parseInt(document.getElementById('anio').value) || null;
+  const imagen = document.getElementById('imagen').value;
+  const url = document.getElementById('url').value;
 
-  const method = modoEditar ? 'PATCH' : 'POST';
-  const url = modoEditar ? `${API_URL}/${peliculaEditarId}` : API_URL;
+  const nuevaPelicula = { titulo, director, genero, anio, imagen, url };
 
-  const res = await fetch(url, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(nuevaPelicula)
+    });
 
-  if (res.ok) {
-    cargarPeliculas();
+    const data = await res.json();
+    alert(data.mensaje || 'Película agregada');
     e.target.reset();
-    modoEditar = false;
-    peliculaEditarId = null;
-    document.querySelector('#formAgregar button').textContent = 'Agregar';
-  } else {
-    alert('Error al guardar la película');
+    cargarPeliculas();
+  } catch (err) {
+    console.error('Error al agregar película:', err);
+    alert('Error al agregar película');
   }
 });
 
-async function eliminar(id) {
-  if (!confirm('¿Estás seguro de eliminar esta película?')) return;
-
-  const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-  if (res.ok) cargarPeliculas();
-  else alert('Error al eliminar la película');
-}
 
 cargarPeliculas();
