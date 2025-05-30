@@ -62,6 +62,55 @@ app.post('/peliculas', async (req, res) => {
   }
 });
 
+app.patch('/peliculas/:idpelicula', async (req, res) => {
+  const id = parseInt(req.params.idpelicula, 10);
+  if (isNaN(id)) {
+    return res.status(400).json({ error: 'ID inválido' });
+  }
+
+  // Campos que puedes actualizar
+  const camposPermitidos = ['titulo', 'director', 'genero', 'anio', 'imagen', 'url'];
+
+  // Filtrar campos que están en el body y que son válidos
+  const camposParaActualizar = [];
+  const valores = [];
+
+  camposPermitidos.forEach(campo => {
+    if (req.body[campo] !== undefined) {
+      camposParaActualizar.push(`${campo} = $${valores.length + 1}`);
+      valores.push(req.body[campo]);
+    }
+  });
+
+  if (camposParaActualizar.length === 0) {
+    return res.status(400).json({ error: 'No se enviaron campos válidos para actualizar' });
+  }
+
+  // Agregar el ID al final para la cláusula WHERE
+  valores.push(id);
+
+  const query = `
+    UPDATE peliculas
+    SET ${camposParaActualizar.join(', ')}
+    WHERE idpelicula = $${valores.length}
+    RETURNING *
+  `;
+
+  try {
+    const result = await pool.query(query, valores);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Película no encontrada' });
+    }
+
+    res.json({ mensaje: 'Película actualizada correctamente', pelicula: result.rows[0] });
+  } catch (error) {
+    console.error('Error al actualizar película:', error);
+    res.status(500).json({ error: 'Error al actualizar película' });
+  }
+});
+
+
 // Eliminar una película
 app.delete('/peliculas/:idpelicula', async (req, res) => {
   const id = parseInt(req.params.idpelicula);
