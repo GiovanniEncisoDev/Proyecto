@@ -1,5 +1,5 @@
 // CAMBIA ESTA URL a la de tu backend en Render
-const API_URL = 'https://tu-backend-render.onrender.com/peliculas';
+const API_URL = 'https://web-6dmv.onrender.com/peliculas';
 
 let modoEditar = false;
 let peliculaEditarId = null;
