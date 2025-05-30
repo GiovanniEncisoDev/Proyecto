@@ -20,18 +20,14 @@ const pool = new Pool({
 app.use(express.json());
 app.use(morgan('dev'));
 
-// Middleware CORS configurado para permitir solo el frontend
 app.use(cors({
-  origin: 'https://proyecto-vbbd.onrender.com', // dominio permitido
-  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'], // agregar OPTIONS para preflight
-  allowedHeaders: ['Content-Type', 'Authorization'], // incluir Authorization si usas token, sino quita
-  optionsSuccessStatus: 200 // para soporte en navegadores antiguos
+  origin: 'https://proyecto-vbbd.onrender.com',
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
 }));
 
-// Esto permite que Express maneje la petición OPTIONS automáticamente, 
-// que los navegadores envían antes de ciertas peticiones (preflight).
 app.options('*', cors());
-
 
 // Obtener todas las películas
 app.get('/peliculas', async (req, res) => {
@@ -65,46 +61,6 @@ app.post('/peliculas', async (req, res) => {
     res.status(500).json({ error: 'Error al agregar película' });
   }
 });
-
-// Actualizar una película
-app.patch('/peliculas/:idpelicula', async (req, res) => {
-  const id = parseInt(req.params.idpelicula, 10);
-  if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
-
-  const campos = ['titulo', 'director', 'genero', 'anio', 'imagen', 'url'];
-  const valores = [];
-  const sets = [];
-
-  campos.forEach((campo) => {
-    if (req.body[campo] !== undefined) {
-      sets.push(`${campo} = $${valores.length + 1}`);
-      valores.push(req.body[campo]);
-    }
-  });
-
-  if (sets.length === 0) {
-    return res.status(400).json({ error: 'No se enviaron campos para actualizar' });
-  }
-
-  valores.push(id);
-  const query = `
-    UPDATE peliculas SET ${sets.join(', ')}
-    WHERE idpelicula = $${valores.length}
-  `;
-
-  try {
-    const result = await pool.query(query, valores);
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Película no encontrada' });
-    }
-
-    res.json({ mensaje: 'Película actualizada correctamente' });
-  } catch (error) {
-    console.error('Error al actualizar película:', error);
-    res.status(500).json({ error: 'Error al actualizar película' });
-  }
-});
-
 
 // Eliminar una película
 app.delete('/peliculas/:idpelicula', async (req, res) => {
