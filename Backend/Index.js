@@ -20,11 +20,18 @@ const pool = new Pool({
 app.use(express.json());
 app.use(morgan('dev'));
 
+// Middleware CORS configurado para permitir solo el frontend
 app.use(cors({
-  origin: 'https://proyecto-vbbd.onrender.com',
-  methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type']
+  origin: 'https://proyecto-vbbd.onrender.com', // dominio permitido
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'], // agregar OPTIONS para preflight
+  allowedHeaders: ['Content-Type', 'Authorization'], // incluir Authorization si usas token, sino quita
+  optionsSuccessStatus: 200 // para soporte en navegadores antiguos
 }));
+
+// Esto permite que Express maneje la petición OPTIONS automáticamente, 
+// que los navegadores envían antes de ciertas peticiones (preflight).
+app.options('*', cors());
+
 
 // Obtener todas las películas
 app.get('/peliculas', async (req, res) => {
